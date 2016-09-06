@@ -130,59 +130,9 @@ When your radio module can run in the 433MHz band (for instance when the radio i
 - uncomment line "e = sx1272.setChannel(0x6C4000);" in Arduino_LoRa_temp or Arduino_LoRa_Simple_temp
 - run your gateway with "lora_gateway --mode n --freq 433.0" where n is the LoRa mode you want to use (e.g. 4 with Arduino_LoRa_temp and 1 with Arduino_LoRa_Simple_temp)
 
-Mounting your Dropbox folder
-============================
 
-With sshfs:
 
-- look at http://mitchtech.net/dropbox-on-raspberry-pi-via-sshfs/. No need of "sudo gpasswd -a pi fuse" on Jessie.
-	
-	> sudo apt-get install sshfs
-	
-- then allow option 'user_allow_other' in /etc/fuse.conf
-	
-with Dropbox uploader:
 
-- look at http://anderson69s.com/2014/02/18/raspberry-pi-dropbox/
-- look at http://raspi.tv/2013/how-to-use-dropbox-with-raspberry-pi
-- look at https://github.com/andreafabrizi/Dropbox-Uploader
-- but not tested yet and not supported yet	
-
-ANNEX.A
-=======
-
-Pre-defined LoRa modes (from initial Libelium SX1272.h)
-
-| mode | BW | SF |
-|------|----|----|
-| 1    | 125| 12 |
-| 2    | 250| 12 |
-| 3    | 125| 10 |
-| 4    | 500| 12 |
-| 5    | 250| 10 |
-| 6    | 500| 11 |
-| 7    | 250|  9 |
-| 8    | 500|  9 |
-| 9    | 500|  7 |
-| 10   | 500|  8 |
-
-Pre-defined channels in 868MHz and 915MHz band (from initial Libelium SX1272.h)
-
-| ch | F(MHz) | ch | F(MHz) |
-|----|--------|----|--------|
-| 10 | 865.2  | 00 | 903.08 |
-| 11 | 865.5  | 01 | 905.24 |
-| 12 | 865.8  | 02 | 907.40 |
-| 13 | 866.1  | 03 | 909.56 |
-| 14 | 865.4  | 04 | 911.72 |
-| 15 | 865.7  | 05 | 913.88 |
-| 16 | 866.0  | 06 | 916.04 |
-| 17 | 868.0  | 07 | 918.20 |
-|  - |   -    | 08 | 920.36 |
-|  - |   -    | 09 | 922.52 | 
-|  - |   -    | 10 | 924.68 | 
-|  - |   -    | 11 | 926.84 | 
-|  - |   -    | 12 | 915.00 |
 
 
 	
