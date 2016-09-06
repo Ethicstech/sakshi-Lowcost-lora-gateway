@@ -1,7 +1,7 @@
-Low-cost LoRa gateway with Raspberry
+saxsi Low-cost LoRa gateway with Raspberry
 ====================================
 
-Please consult the web page: http://cpham.perso.univ-pau.fr/LORA/RPIgateway.html
+
 
 Install Raspbian Wheezy or Jessie
 =================================
@@ -206,4 +206,4 @@ Look at the gw_advanced folder and follow instructions.
 
 
 Enjoy!
-C. Pham
+Ethicstech
