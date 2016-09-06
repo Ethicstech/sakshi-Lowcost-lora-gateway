@@ -29,44 +29,6 @@
 #include "SX1272.h"
 #include <SPI.h>
 
-/*  CHANGE LOGS by C. Pham
- *
- *  Jan, 23rd, 2016
- *      - the packet format at transmission does not use the original Libelium format anymore
- *      * the retry field is removed therefore all operations using retry will probably not work well, not tested though
- *          - therefore DO NOT use sendPacketTimeoutACKRetries()
- *          - the reason is that we do not want to have a reserved byte after the payload
- *      * the length field is removed because it is much better to get the packet length at the reception side
- *      * after the dst field, we inserted a packet type field to better identify the packet type: DATA, ACK, encryption, app key,...
- *          - the format is now dst(1B) ptype(1B) src(1B) seq(1B) payload(xB)
- *          - ptype is decomposed in 2 parts type(4bits) flags(4bits)
- *          - type can take current value of DATA=0001 and ACK=0010
- *          - the flags are from left to right: ack_requested|encrypted|with_appkey|is_binary
- *          - ptype can be set with setPacketType(), see constant defined in SX1272.h
- *          - the header length is then 4 instead of 5
- *  Jan, 16th, 2016
- *      - add support for SX1276, automatic detect
- *      - add LF/HF calibaration copied from LoRaMAC-Node. Don't know if it is really necessary though
- *      - change various radio settings
- *  Dec, 10th, 2015
- *      - add SyncWord for test with simple LoRaWAN
- *      - add mode 11 that have BW=125, CR=4/5, SF=7 on channel 868.1MHz
- *          - use following in your code if (loraMode==11) { e = sx1272.setChannel(CH_18_868); }
- *  Nov, 13th, 2015
- *      - add CarrierSense() to perform some Listen Before Talk procedure
- *      - add dynamic ACK suport
- *          - compile with W_REQUESTED_ACK, retry field is used to indicate at the receiver
- *			  that an ACK should be sent
- *          - receiveWithTimeout() has been modified to send an ACK if retry is 1
- *          - at sender side, sendPacketTimeoutACK() has been modified to indicate
- *			  whether retry should be set to 1 or not in setPacket()
- *          - receiver should always use receiveWithTimeout() while sender decides to use
- *			  sendPacketTimeout() or sendPacketTimeoutACK()
- *  Jun, 2015
- *      - Add time on air computation and CAD features
-*/
-
-// Added by C. Pham
 // based on SIFS=3CAD
 uint8_t sx1272_SIFS_value[11]={0, 183, 94, 44, 47, 23, 24, 12, 12, 7, 4};
 uint8_t sx1272_CAD_value[11]={0, 62, 31, 16, 16, 8, 9, 5, 3, 1, 1};
@@ -111,7 +73,7 @@ SX1272::SX1272()
     packet_sent.retry = _retries;
 };
 
-// added by C. Pham
+
 // copied from LoRaMAC-Node
 /*!
  * Performs the Rx chain calibration for LF and HF bands
@@ -185,7 +147,7 @@ uint8_t SX1272::ON()
 
     delay(100);
 
-    // added by C. Pham
+  
     pinMode(SX1272_RST,OUTPUT);
     digitalWrite(SX1272_RST,HIGH);
     delay(100);
@@ -216,7 +178,7 @@ uint8_t SX1272::ON()
     }
     // end from single_chan_pkt_fwd by Thomas Telkamp
 
-    // added by C. Pham
+   
     RxChainCalibration();
 
     setMaxCurrent(0x1B);
@@ -228,7 +190,7 @@ uint8_t SX1272::ON()
     // set LoRa mode
     state = setLORA();
 
-    // Added by C. Pham for ToA computation
+    
     getPreambleLength();
 #ifdef W_NET_KEY
     //#if (SX1272_debug_mode > 1)
@@ -256,8 +218,7 @@ uint8_t SX1272::ON()
     writeRegister(0x7,0x99);
     writeRegister(0x8,0x99);
     // modified by C. Pham
-    // added by C. Pham
-    if (_board==SX1272Chip)
+        if (_board==SX1272Chip)
         // RFIO_pin RFU OutputPower
         // 0 000 0000
         writeRegister(0x9,0x0);
@@ -270,7 +231,7 @@ uint8_t SX1272::ON()
     writeRegister(0xA,0x9);
     writeRegister(0xB,0x3B);
 
-    // comment by C. Pham
+ 
     // still valid for SX1276
     writeRegister(0xC,0x23);
 
@@ -293,9 +254,9 @@ uint8_t SX1272::ON()
     writeRegister(0x1B,0x0);
     writeRegister(0x1C,0x0);
 
-    // added by C. Pham
+  
     if (_board==SX1272Chip) {
-        // comment by C. Pham
+ 
         // 0x4A = 01 001 0 1 0
         // BW=250 CR=4/5 ImplicitH_off RxPayloadCrcOn_on LowDataRateOptimize_off
         writeRegister(0x1D,0x4A);
@@ -321,7 +282,7 @@ uint8_t SX1272::ON()
     writeRegister(0x24,0x0);
     writeRegister(0x25,0x0);
 
-    // added by C. Pham
+
     if (_board==SX1272Chip)
         writeRegister(0x26,0x0);
     else
@@ -496,7 +457,6 @@ uint8_t SX1272::setLORA()
     Serial.println(F("Starting 'setLORA'"));
 #endif
 
-    // modified by C. Pham
     uint8_t retry=0;
 
     do {
@@ -625,10 +585,10 @@ uint8_t SX1272::getMode()
         setLORA();					// Setting LoRa mode
     }
     value = readRegister(REG_MODEM_CONFIG1);
-    // added by C. Pham
+
     if (_board==SX1272Chip) {
         _bandwidth = (value >> 6);   			// Storing 2 MSB from REG_MODEM_CONFIG1 (=_bandwidth)
-        // added by C. Pham
+
         // convert to common bandwidth values used by both SX1272 and SX1276
         _bandwidth += 7;
     }
@@ -776,7 +736,7 @@ int8_t SX1272::setMode(uint8_t mode)
         setBW(BW_500);      // BW = 500 KHz
         break;
 
-    // added by C. Pham
+   
     // test for LoRaWAN channel
     case 11:
         setCR(CR_5);        // CR = 4/5
@@ -837,7 +797,7 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 2: BW = 250 KHz, CR = 4/5, SF = 12.
         case 2:
 
-            //modified by C. Pham
+           
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x09 )
                     state=0;
@@ -862,7 +822,7 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 3: BW = 125 KHz, CR = 4/5, SF = 10.
         case 3:
 
-            //modified by C. Pham
+            
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x01 )
                     state=0;
@@ -887,7 +847,7 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 4: BW = 500 KHz, CR = 4/5, SF = 12.
         case 4:
 
-            //modified by C. Pham
+           
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x11 )
                     state=0;
@@ -912,7 +872,7 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 5: BW = 250 KHz, CR = 4/5, SF = 10.
         case 5:
 
-            //modified by C. Pham
+            
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x09 )
                     state=0;
@@ -937,7 +897,6 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 6: BW = 500 KHz, CR = 4/5, SF = 11.
         case 6:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x11 )
                     state=0;
@@ -962,7 +921,6 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 7: BW = 250 KHz, CR = 4/5, SF = 9.
         case 7:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x09 )
                     state=0;
@@ -987,7 +945,6 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 8: BW = 500 KHz, CR = 4/5, SF = 9.
         case 8:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x11 )
                     state=0;
@@ -1012,7 +969,6 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 9: BW = 500 KHz, CR = 4/5, SF = 8.
         case 9:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x11 )
                     state=0;
@@ -1037,7 +993,6 @@ int8_t SX1272::setMode(uint8_t mode)
             // mode 10: BW = 500 KHz, CR = 4/5, SF = 7.
         case 10:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x11 )
                     state=0;
@@ -1059,12 +1014,10 @@ int8_t SX1272::setMode(uint8_t mode)
             }
             break;
 
-            // added by C. Pham
             // test of LoRaWAN channel
             // mode 11: BW = 125 KHz, CR = 4/5, SF = 12.
         case 11:
 
-            //modified by C. Pham
             if (_board==SX1272Chip) {
                 if( (config1 >> 3) == 0x01 )
                     state=0;
@@ -1095,8 +1048,7 @@ int8_t SX1272::setMode(uint8_t mode)
 #endif
         }
     }
-    // added by C. Pham
-    if (state == 0)
+        if (state == 0)
         _loraMode=mode;
 
 #if (SX1272_debug_mode > 1)
@@ -1136,8 +1088,7 @@ uint8_t	SX1272::getHeader()
     Serial.println(F("Starting 'getHeader'"));
 #endif
 
-    // added by C. Pham
-    uint8_t theHeaderBit;
+uint8_t theHeaderBit;
 
     if (_board==SX1272Chip)
         theHeaderBit=2;
@@ -1221,7 +1172,7 @@ int8_t	SX1272::setHeaderON()
         }
         else
         {
-            // added by C. Pham
+           
             if (_board==SX1272Chip)
                 config1 = config1 & B11111011;		// clears bit 2 from config1 = headerON
             else
@@ -1230,7 +1181,6 @@ int8_t	SX1272::setHeaderON()
             writeRegister(REG_MODEM_CONFIG1,config1);	// Update config1
         }
 
-        // added by C. Pham
         uint8_t theHeaderBit;
 
         if (_board==SX1272Chip)
@@ -1241,7 +1191,7 @@ int8_t	SX1272::setHeaderON()
         if( _spreadingFactor != 6 )
         { // checking headerON taking out bit 2 from REG_MODEM_CONFIG1
             config1 = readRegister(REG_MODEM_CONFIG1);
-            // modified by C. Pham
+          
             if( bitRead(config1, theHeaderBit) == HEADER_ON )
             {
                 state = 0;
@@ -1290,7 +1240,7 @@ int8_t	SX1272::setHeaderOFF()
     {
         config1 = readRegister(REG_MODEM_CONFIG1);	// Save config1 to modify only the header bit
 
-        // modified by C. Pham
+       
         if (_board==SX1272Chip)
             config1 = config1 | B00000100;			// sets bit 2 from REG_MODEM_CONFIG1 = headerOFF
         else
@@ -1300,7 +1250,6 @@ int8_t	SX1272::setHeaderOFF()
 
         config1 = readRegister(REG_MODEM_CONFIG1);
 
-        // added by C. Pham
         uint8_t theHeaderBit;
 
         if (_board==SX1272Chip)
@@ -1350,7 +1299,6 @@ uint8_t	SX1272::getCRC()
     if( _modem == LORA )
     { // LoRa mode
 
-        // added by C. Pham
         uint8_t theRegister;
         uint8_t theCrcBit;
 
@@ -1439,7 +1387,6 @@ uint8_t	SX1272::setCRC_ON()
     if( _modem == LORA )
     { // LORA mode
 
-        // added by C. Pham
         uint8_t theRegister;
         uint8_t theCrcBit;
 
@@ -1525,7 +1472,6 @@ uint8_t	SX1272::setCRC_OFF()
     if( _modem == LORA )
     { // LORA mode
 
-        // added by C. Pham
         uint8_t theRegister;
         uint8_t theCrcBit;
 
@@ -1725,7 +1671,6 @@ uint8_t	SX1272::setSF(uint8_t spr)
             config2 = config2 | B10110000;	// sets bits 7, 5 & 4 from REG_MODEM_CONFIG2
             getBW();
 
-            // modified by C. Pham
             if( _bandwidth == BW_125)
             { // LowDataRateOptimize (Mandatory with SF_11 if BW_125)
                 if (_board==SX1272Chip) {
@@ -1744,7 +1689,7 @@ uint8_t	SX1272::setSF(uint8_t spr)
             config2 = config2 | B11000000;	// sets bits 7 & 6 from REG_MODEM_CONFIG2
             if( _bandwidth == BW_125)
             { // LowDataRateOptimize (Mandatory with SF_12 if BW_125)
-                // modified by C. Pham
+               
                 if (_board==SX1272Chip) {
                     config1 = (readRegister(REG_MODEM_CONFIG1));	// Save config1 to modify only the LowDataRateOptimize
                     config1 = config1 | B00000001;
@@ -1774,7 +1719,6 @@ uint8_t	SX1272::setSF(uint8_t spr)
         }
         else
         {
-            // added by C. Pham
             setHeaderON();
 
             // LoRa detection Optimize: 0x03 --> SF7 to SF12
@@ -1784,7 +1728,6 @@ uint8_t	SX1272::setSF(uint8_t spr)
             writeRegister(REG_DETECTION_THRESHOLD, 0x0A);
         }
 
-        // added by C. Pham
         if (_board==SX1272Chip) {
             // comment by C. Pham
             // bit 9:8 of SymbTimeout are then 11
@@ -1808,14 +1751,13 @@ uint8_t	SX1272::setSF(uint8_t spr)
 
         delay(100);
 
-        // added by C. Pham
         byte configAgc;
         uint8_t theLDRBit;
 
         if (_board==SX1272Chip) {
             config1 = (readRegister(REG_MODEM_CONFIG1));	// Save config1 to check update
             config2 = (readRegister(REG_MODEM_CONFIG2));	// Save config2 to check update
-            // comment by C. Pham
+       
             // (config2 >> 4) ---> take out bits 7-4 from REG_MODEM_CONFIG2 (=_spreadingFactor)
             // bitRead(config1, 0) ---> take out bits 1 from config1 (=LowDataRateOptimize)
             // config2 is only for the AgcAutoOn
@@ -1925,7 +1867,7 @@ boolean	SX1272::isBW(uint16_t band)
 #endif
 
     // Checking available values for _bandwidth
-    // added by C. Pham
+
     if (_board==SX1272Chip) {
         switch(band)
         {
@@ -1994,7 +1936,7 @@ int8_t	SX1272::getBW()
     }
     else
     {
-        // added by C. Pham
+        
         if (_board==SX1272Chip) {
             // take out bits 7-6 from REG_MODEM_CONFIG1 indicates _bandwidth
             config1 = (readRegister(REG_MODEM_CONFIG1)) >> 6;
@@ -2073,7 +2015,7 @@ int8_t	SX1272::setBW(uint16_t band)
     writeRegister(REG_OP_MODE, LORA_STANDBY_MODE);	// LoRa standby mode
     config1 = (readRegister(REG_MODEM_CONFIG1));	// Save config1 to modify only the BW
 
-    // added by C. Pham for SX1276
+    
     if (_board==SX1272Chip) {
         switch(band)
         {
@@ -2130,7 +2072,6 @@ int8_t	SX1272::setBW(uint16_t band)
 
     config1 = (readRegister(REG_MODEM_CONFIG1));
 
-    // added by C. Pham
     if (_board==SX1272Chip) {
         // (config1 >> 6) ---> take out bits 7-6 from REG_MODEM_CONFIG1 (=_bandwidth)
         switch(band)
@@ -2297,7 +2238,7 @@ int8_t	SX1272::getCR()
     }
     else
     {
-        // added by C. Pham
+
         if (_board==SX1272Chip) {
             // take out bits 7-3 from REG_MODEM_CONFIG1 indicates _bandwidth & _codingRate
             config1 = (readRegister(REG_MODEM_CONFIG1)) >> 3;
@@ -2361,7 +2302,7 @@ int8_t	SX1272::setCR(uint8_t cod)
 
     config1 = readRegister(REG_MODEM_CONFIG1);	// Save config1 to modify only the CR
 
-    // added by C. Pham
+
     if (_board==SX1272Chip) {
         switch(cod)
         {
@@ -2404,7 +2345,6 @@ int8_t	SX1272::setCR(uint8_t cod)
 
     config1 = readRegister(REG_MODEM_CONFIG1);
 
-    // added by C. Pham
     uint8_t nshift=3;
 
     // only 1 right shift for SX1276
@@ -2485,7 +2425,7 @@ boolean	SX1272::isChannel(uint32_t ch)
     case CH_15_868:
     case CH_16_868:
     case CH_17_868:
-        //added by C. Pham
+      
     case CH_18_868:
         //end
     case CH_00_900:
@@ -2579,7 +2519,6 @@ int8_t SX1272::setChannel(uint32_t ch)
     Serial.println(F("Starting 'setChannel'"));
 #endif
 
-    // added by C. Pham
     _starttime=millis();
 
     st0 = readRegister(REG_OP_MODE);	// Save the previous status
@@ -2602,7 +2541,6 @@ int8_t SX1272::setChannel(uint32_t ch)
     writeRegister(REG_FRF_MID, freq2);
     writeRegister(REG_FRF_LSB, freq1);
 
-    // added by C. Pham
     _stoptime=millis();
 
     delay(100);
@@ -2670,7 +2608,6 @@ uint8_t SX1272::getPower()
     value = readRegister(REG_PA_CONFIG);
     state = 1;
 
-    // modified by C. Pham
     // get only the OutputPower
     _power = value & B00001111;
 
@@ -2776,7 +2713,6 @@ int8_t SX1272::setPower(char p)
         writeRegister(RegPaDacReg, 0x84);
     }
 
-    // added by C. Pham
     if (_board==SX1272Chip) {
         writeRegister(REG_PA_CONFIG, value);	// Setting output power value
     }
@@ -2854,7 +2790,7 @@ int8_t SX1272::setPowerNum(uint8_t pow)
 #endif
     }
 
-    // added by C. Pham
+  
     if (_board==SX1276Chip) {
         value=readRegister(REG_PA_CONFIG);
         // clear OutputPower, but keep current value of PaSelect and MaxPower
