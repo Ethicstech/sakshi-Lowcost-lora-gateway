@@ -1,7 +1,6 @@
 /* 
  *  LoRa gateway to receive and send command
  *
- *  Copyright (C) 2015-2016 Congduc Pham
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,8 +17,7 @@
  *
  ***************************************************************************** 
  *  Version:                1.4
- *  Design:                 C. Pham
- *  Implementation:         C. Pham
+ *  
  *
  *  waits for command or data on serial port or from the LoRa module
  *    - command starts with /@ and ends with #
