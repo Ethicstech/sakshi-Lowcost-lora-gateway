@@ -1,7 +1,7 @@
 /*
  *  simple ping-pong test by requesting an ACK from the gateway
  *
- *  Copyright (C) 2016 Congduc Pham, University of Pau, France
+ *  
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
